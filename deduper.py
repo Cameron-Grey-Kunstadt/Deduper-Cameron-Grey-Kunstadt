@@ -18,8 +18,10 @@ with open(args.umi) as umifile:
     umi_set = set(umifile.read().splitlines())
 
 ###########################################################
+
 def get_line_info(line):
-    '''Returns array of important info from provided SAM file line'''
+    '''Returns tuple of important info from provided SAM file line. Position
+       is softclip-corrected'''
     chrom = get_chrom(line)
     strand = get_strand(line)
     position = get_corrected_position(line, strand)
@@ -32,12 +34,6 @@ def get_chrom(line):
     chrom = groups[2]
     return chrom
 
-def get_position(line):
-    '''Returns position from provided SAM file line'''
-    groups = line.split('\t')
-    position = groups[3]
-    return position
-
 def get_strand(line):
     '''Returns strand from provided SAM file line'''
     groups = line.split('\t')
@@ -48,20 +44,6 @@ def get_strand(line):
         strand = '-'
     return strand
 
-def get_umi(line):
-    '''Returns umi from provided SAM file line'''
-    groups = line.split('\t')
-    qname = groups[0]
-    qname_groups = qname.split(':')
-    umi = qname_groups[7]
-    return umi
-
-def get_cigar(line):
-    '''Returns CIGAR string from provided SAM file line'''
-    groups = line.split('\t')
-    cigar = groups[5]
-    return cigar
-
 def get_corrected_position(line, strand):
     '''Returns corrected position of SAM file line and strand'''
     position = int(get_position(line))
@@ -71,6 +53,17 @@ def get_corrected_position(line, strand):
     else:
         return (position + minus_strand_softclip_adjustment(cigar))
 
+def get_position(line):
+    '''Returns position from provided SAM file line'''
+    groups = line.split('\t')
+    position = groups[3]
+    return position
+
+def get_cigar(line):
+    '''Returns CIGAR string from provided SAM file line'''
+    groups = line.split('\t')
+    cigar = groups[5]
+    return cigar
 
 def plus_strand_softclip_adjustment(cigar):
     '''Calculates the needed softclip adjustment from cigar string, for + strand'''
@@ -83,7 +76,6 @@ def plus_strand_softclip_adjustment(cigar):
         else:
             clip_num += letter
     return int(clip_num)
-
 
 def minus_strand_softclip_adjustment(cigar):
     '''Calculates the needed softclip adjustment from cigar string, for - strand'''
@@ -106,6 +98,13 @@ def minus_strand_softclip_adjustment(cigar):
             clip_num += letter
     return adjustment
 
+def get_umi(line):
+    '''Returns umi from provided SAM file line'''
+    groups = line.split('\t')
+    qname = groups[0]
+    qname_groups = qname.split(':')
+    umi = qname_groups[7]
+    return umi
 
 def validate_umi(umi):
     '''Returns bool of if umi is in umi-set'''
