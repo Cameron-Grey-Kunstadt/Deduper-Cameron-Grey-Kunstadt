@@ -67,12 +67,12 @@ def get_corrected_position(line, strand):
     position = int(get_position(line))
     cigar = get_cigar(line)
     if strand == '+':
-        return (position - plus_softclip_adjustment(cigar))
+        return (position - plus_strand_softclip_adjustment(cigar))
     else:
-        return (position - minus_softclip_adjustment(cigar))
+        return (position + minus_strand_softclip_adjustment(cigar))
 
 
-def plus_softclip_adjustment(cigar):
+def plus_strand_softclip_adjustment(cigar):
     '''Calculates the needed softclip adjustment from cigar string, for + strand'''
     clip_num = ""
     for letter in cigar:
@@ -85,7 +85,7 @@ def plus_softclip_adjustment(cigar):
     return int(clip_num)
 
 
-def minus_softclip_adjustment(cigar):
+def minus_strand_softclip_adjustment(cigar):
     '''Calculates the needed softclip adjustment from cigar string, for - strand'''
     clip_num = ""
     adjustment = 0
