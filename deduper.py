@@ -5,13 +5,13 @@ import argparse
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-f', '--file')
+parser.add_argument('-f', '--file', help="Input must be a sam file sorted by chromosome")
 parser.add_argument('-o', '--outfile')
 parser.add_argument('-u', '--umi')
 #parser.add_argument('-h', '--help')
 args = parser.parse_args()
 
-#TODO: Add help, go over rubric again
+#TODO: Add help, test strand softclip adjustment, add RC UMI set
 
 umi_set = {}
 with open(args.umi) as umifile:
@@ -20,19 +20,19 @@ with open(args.umi) as umifile:
 ###########################################################
 
 def get_line_info(line):
-    '''Returns tuple of important info from provided SAM file line. Position
+    '''Returns tuple of important info from provided SAM file line to use in duplicate removal. Position
        is softclip-corrected'''
-    chrom = get_chrom(line)
-    strand = get_strand(line)
-    position = get_corrected_position(line, strand)
-    umi = get_umi(line)
+    chrom: int =  get_chrom(line)
+    strand: str = get_strand(line)
+    position: int = get_corrected_position(line, strand)
+    umi: str = get_umi(line)
     return (chrom, position, strand, umi)
 
 def get_chrom(line):
     '''Returns chromosome from provided SAM file line'''
     groups = line.split('\t')
     chrom = groups[2]
-    return chrom
+    return int(chrom)
 
 def get_strand(line):
     '''Returns strand from provided SAM file line'''
@@ -46,24 +46,13 @@ def get_strand(line):
 
 def get_corrected_position(line, strand):
     '''Returns corrected position of SAM file line and strand'''
-    position = int(get_position(line))
-    cigar = get_cigar(line)
+    groups = line.split('\t')
+    position = int(groups[3])
+    cigar =  groups[5]
     if strand == '+':
         return (position - plus_strand_softclip_adjustment(cigar))
     else:
         return (position + minus_strand_softclip_adjustment(cigar))
-
-def get_position(line):
-    '''Returns position from provided SAM file line'''
-    groups = line.split('\t')
-    position = groups[3]
-    return position
-
-def get_cigar(line):
-    '''Returns CIGAR string from provided SAM file line'''
-    groups = line.split('\t')
-    cigar = groups[5]
-    return cigar
 
 def plus_strand_softclip_adjustment(cigar):
     '''Calculates the needed softclip adjustment from cigar string, for + strand'''
@@ -90,6 +79,7 @@ def minus_strand_softclip_adjustment(cigar):
             adjustment += int(clip_num)
             clip_num = ""
         elif letter == 'M' or letter == 'D':
+            past_first_clip = True
             adjustment += int(clip_num)
             clip_num = ""
         elif letter.isnumeric() == False:
@@ -116,17 +106,17 @@ def validate_umi(umi):
 ########################################################
 
 with open(args.file, 'r') as infile, open(args.outfile, 'w') as outfile:
-    dupset = set() # Set of read info to check if there are duplicates
+    dupset = set() # Set of unique read-info tuples to check if there are duplicates
     chr_num = 1
     while True:
         line = infile.readline()
-        if line == "":
+        if line == "": # Break if EOF
             break
-        elif line[0] == "@": # Just write out the header regardless
+        elif line[0] == "@": # Write out all header lines regardless
             outfile.write(line)
         else:
-            line_info = get_line_info(line) # Used to compare read duplication
-            chr = int(line_info[0])
+            line_info = get_line_info(line) # line_info is a tuple used to compare read duplication
+            chr = line_info[0]
             umi = line_info[3]
 
             if chr != chr_num:
