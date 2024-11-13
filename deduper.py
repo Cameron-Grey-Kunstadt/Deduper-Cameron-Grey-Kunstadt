@@ -22,7 +22,7 @@ def get_chrom(line):
     '''Returns chromosome from provided SAM file line'''
     groups = line.split('\t')
     chrom = groups[2]
-    return int(chrom)
+    return chrom
 
 def get_strand(line):
     '''Returns strand from provided SAM file line'''
@@ -99,14 +99,14 @@ with open(args.file, 'r') as infile, open(args.outfile, 'w') as outfile:
         elif line[0] == "@": # Write out all header lines regardless
             outfile.write(line)
         else:
-            chrom: int =  get_chrom(line)
+            chrom: str =  get_chrom(line)
             strand: str = get_strand(line)
             position: int = get_corrected_position(line, strand)
             umi: str = get_umi(line)
 
             line_info = (chrom, position, strand, umi)
 
-            if chrom != chrom_num:
+            if chrom != str(chrom_num):
                 dupset = set() # Wipe the dupset every new chromosome to save on memory
                 chrom_num += 1
             
