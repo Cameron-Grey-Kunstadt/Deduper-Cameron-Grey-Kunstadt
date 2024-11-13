@@ -4,11 +4,10 @@ import argparse
 # Oct-19-2024
 
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="This program deduplicates reads based on umi, strand, chr, and corrected position ")
 parser.add_argument('-f', '--file', help="Input must be a sam file sorted by chromosome")
 parser.add_argument('-o', '--outfile')
 parser.add_argument('-u', '--umi', help="txt file delimited by newlines")
-parser.print_help()
 args = parser.parse_args()
 
 #TODO: Add help, test strand softclip adjustment
